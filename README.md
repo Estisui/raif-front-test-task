@@ -2,6 +2,10 @@
 
 Выполнил: Сухачев Степан
 
+## Демо
+
+Приложение доступно по ссылке: [https://estisui.github.io/raif-front-test-task](https://estisui.github.io/raif-front-test-task)
+
 ## Стек технологий
 
 - React 18
@@ -11,7 +15,7 @@
 
 ## Функционал
 
-Приложение представляет собой таблицу со списком стран, полученных из API [REST Countries](https://restcountries.com/). 
+Приложение представляет собой таблицу со списком стран, полученных из API [REST Countries](https://restcountries.com/).
 
 Реализованные возможности:
 
@@ -24,4 +28,12 @@
 ```bash
 npm install
 npm run dev
+```
+
+## Деплой
+
+Проект развернут с помощью GitHub Pages. Для обновления деплоя:
+
+```bash
+npm run deploy
 ```
