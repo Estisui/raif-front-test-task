@@ -13,20 +13,24 @@ interface Country {
   region: string;
 }
 
+interface SortConfig {
+  field: string;
+  direction: 'asc' | 'desc';
+}
+
 const CountriesTable: React.FC = () => {
   const [countries, setCountries] = useState<Country[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sort, setSort] = useState<SortConfig>({ field: 'name', direction: 'asc' });
 
   useEffect(() => {
     const fetchCountries = async () => {
       try {
         const response = await fetch('https://restcountries.com/v3.1/all');
-        if (!response.ok) {
-          throw new Error('Failed to fetch countries');
-        }
+        if (!response.ok) throw new Error('Failed to fetch countries');
         const data = await response.json();
-        const sortedData = data.sort((a: Country, b: Country) => 
+        const sortedData = [...data].sort((a, b) => 
           a.name.common.localeCompare(b.name.common)
         );
         setCountries(sortedData);
@@ -40,13 +44,36 @@ const CountriesTable: React.FC = () => {
     fetchCountries();
   }, []);
 
-  if (isLoading) {
-    return <Spinner size='xl' />;
-  }
+  const handleSort = (_: React.FormEvent | undefined, sortConfig?: { field: string; direction: 'asc' | 'desc' }) => {
+    if (!sortConfig) return;
 
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
+    setSort(sortConfig);
+    
+    const sortedCountries = [...countries].sort((a, b) => {
+      const aValue = sortConfig.field === 'name' ? a.name.common : 
+                     sortConfig.field === 'population' ? a.population :
+                     sortConfig.field === 'capital' ? (a.capital?.[0] || '') :
+                     sortConfig.field === 'region' ? a.region : '';
+      
+      const bValue = sortConfig.field === 'name' ? b.name.common :
+                     sortConfig.field === 'population' ? b.population :
+                     sortConfig.field === 'capital' ? (b.capital?.[0] || '') :
+                     sortConfig.field === 'region' ? b.region : '';
+
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+
+      return sortConfig.direction === 'asc' 
+        ? String(aValue).localeCompare(String(bValue))
+        : String(bValue).localeCompare(String(aValue));
+    });
+
+    setCountries(sortedCountries);
+  };
+
+  if (isLoading) return <Spinner size='xl' />;;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <Table 
@@ -54,6 +81,8 @@ const CountriesTable: React.FC = () => {
       size="m"
       valign="middle"
       dataKey={(item: Country) => item.name.common}
+      sort={sort}
+      onSort={handleSort}
     >
       <Table.Column 
         id="flag" 
@@ -92,7 +121,6 @@ const CountriesTable: React.FC = () => {
         id="population" 
         title="Population"
         sortable
-        // align="right"
       >
         {(row: Country) => row.population.toLocaleString()}
       </Table.Column>
