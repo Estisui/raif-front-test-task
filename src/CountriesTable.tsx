@@ -27,9 +27,16 @@ const CountriesTable: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
+    const API_URL = 'https://restcountries.com/v3.1/all?fields=name,capital,population,flags,region';
+
     const fetchCountries = async () => {
       try {
-        const response = await fetch('https://restcountries.com/v3.1/all');
+        const response = await fetch(API_URL, {
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+          }
+        });
         if (!response.ok) throw new Error('Failed to fetch countries');
         const data = await response.json();
         const sortedData = [...data].sort((a, b) => 
