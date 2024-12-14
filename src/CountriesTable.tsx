@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Spinner } from 'vienna-ui';
+import { Table, Spinner, Input } from 'vienna-ui';
 
 interface Country {
   name: {
@@ -20,9 +20,11 @@ interface SortConfig {
 
 const CountriesTable: React.FC = () => {
   const [countries, setCountries] = useState<Country[]>([]);
+  const [filteredCountries, setFilteredCountries] = useState<Country[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sort, setSort] = useState<SortConfig>({ field: 'name', direction: 'asc' });
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -34,6 +36,7 @@ const CountriesTable: React.FC = () => {
           a.name.common.localeCompare(b.name.common)
         );
         setCountries(sortedData);
+        setFilteredCountries(sortedData);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
@@ -43,6 +46,17 @@ const CountriesTable: React.FC = () => {
 
     fetchCountries();
   }, []);
+
+  console.log(filteredCountries);
+
+  useEffect(() => {
+    const filtered = countries.filter(country => 
+      country.name.common.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      country.region.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (country.capital?.[0]?.toLowerCase() || '').includes(searchQuery.toLowerCase())
+    );
+    setFilteredCountries(filtered);
+  }, [searchQuery, countries]);
 
   const handleSort = (_: React.FormEvent | undefined, sortConfig?: { field: string; direction: 'asc' | 'desc' }) => {
     if (!sortConfig) return;
@@ -72,59 +86,67 @@ const CountriesTable: React.FC = () => {
     setCountries(sortedCountries);
   };
 
-  if (isLoading) return <Spinner size='xl' />;;
+  if (isLoading) return <Spinner size='xl' />;
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <Table 
-      data={countries}
-      size="m"
-      valign="middle"
-      dataKey={(item: Country) => item.name.common}
-      sort={sort}
-      onSort={handleSort}
-    >
-      <Table.Column 
-        id="flag" 
-        title="Flag"
+    <div>
+      <Input
+        style={{ marginBottom: '1rem' }}
+        placeholder="Search by country, region or capital..."
+        value={searchQuery}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+      />
+      <Table 
+        data={filteredCountries}
+        size="m"
+        valign="middle"
+        dataKey={(item: Country) => item.name.common}
+        sort={sort}
+        onSort={handleSort}
       >
-        {(row: Country) => (
-          <img 
-            src={row.flags.png} 
-            alt={`${row.name.common} flag`}
-            style={{ width: '30px', height: 'auto' }}
-          />
-        )}
-      </Table.Column>
-      <Table.Column 
-        id="name" 
-        title="Country"
-        sortable
-      >
-        {(row: Country) => row.name.common}
-      </Table.Column>
-      <Table.Column 
-        id="region" 
-        title="Region"
-        sortable
-      >
-        {(row: Country) => row.region}
-      </Table.Column>
-      <Table.Column 
-        id="capital" 
-        title="Capital"
-        sortable
-      >
-        {(row: Country) => row.capital?.[0] || '—'}
-      </Table.Column>
-      <Table.Column 
-        id="population" 
-        title="Population"
-        sortable
-      >
-        {(row: Country) => row.population.toLocaleString()}
-      </Table.Column>
-    </Table>
+        <Table.Column 
+          id="flag" 
+          title="Flag"
+        >
+          {(row: Country) => (
+            <img 
+              src={row.flags.png} 
+              alt={`${row.name.common} flag`}
+              style={{ width: '30px', height: 'auto' }}
+            />
+          )}
+        </Table.Column>
+        <Table.Column 
+          id="name" 
+          title="Country"
+          sortable
+        >
+          {(row: Country) => row.name.common}
+        </Table.Column>
+        <Table.Column 
+          id="region" 
+          title="Region"
+          sortable
+        >
+          {(row: Country) => row.region}
+        </Table.Column>
+        <Table.Column 
+          id="capital" 
+          title="Capital"
+          sortable
+        >
+          {(row: Country) => row.capital?.[0] || '—'}
+        </Table.Column>
+        <Table.Column 
+          id="population" 
+          title="Population"
+          sortable
+        >
+          {(row: Country) => row.population.toLocaleString()}
+        </Table.Column>
+      </Table>
+    </div>
   );
 };
 
